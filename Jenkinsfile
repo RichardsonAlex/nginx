@@ -1,4 +1,5 @@
-def targets = ['cheri256', 'cheri128']
+//def targets = ['cheri256', 'cheri128']
+def targets = ['cheri256']
 def jobs = [:]
 for (x in targets) {
     def target = x // Need to bind the label variable before the closure - can't do 'for (label in labels)'
@@ -13,6 +14,9 @@ for (x in targets) {
                 dir('nginx') {
                     checkout scm
                 }
+                dir ('cheribuild') {
+                    git 'https://github.com/CTSRD-CHERI/cheribuild.git'
+                }
                 sdkImage.inside {
                     env
                     sh '''
@@ -21,7 +25,7 @@ for (x in targets) {
                              pwd
                              cd $WORKSPACE
                              ls -la
-                             git clone https://github.com/CTSRD-CHERI/cheribuild.git
+                             git clone 
                              ./cheribuild/jenkins-cheri-build.py --help
                              '''
                 }
