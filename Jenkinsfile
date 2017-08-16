@@ -10,16 +10,19 @@ for (x in targets) {
             def sdkImage = docker.image("ctsrd/cheri-sdk-${target}:latest")
             sdkImage.pull() // make sure we have the latest available from Docker Hub
             stage("build ${target}") {
-                checkout scm
+                dir('nginx') {
+                    checkout scm
+                }
                 sdkImage.inside {
                     env
                     sh '''
                              echo Running in SDK image
                              env
                              pwd
+                             cd $WORKSPACE
                              ls -la
-                             git clone https://github.com/CTSRD-CHERI/cheribuild.git /cheribuild
-                             /cheribuild/jenkins-cheri-build.py --help
+                             git clone https://github.com/CTSRD-CHERI/cheribuild.git
+                             ./cheribuild/jenkins-cheri-build.py --help
                              '''
                 }
             }
