@@ -25,7 +25,6 @@ for (x in targets) {
                              pwd
                              cd $WORKSPACE
                              ls -la
-                             git clone 
                              ./cheribuild/jenkins-cheri-build.py --help
                              '''
                 }
