@@ -18,14 +18,16 @@ for (x in targets) {
                     git 'https://github.com/CTSRD-CHERI/cheribuild.git'
                 }
                 sdkImage.inside {
-                    env
+                    env.CPU = target
+                    env.ISA = 'vanilla'
+                    env.INSTALL_PREFIX = "/tmp/benchdir/nginx-${env.CPU}-${env.ISA}"
                     sh '''
                              echo Running in SDK image
                              env
                              pwd
                              cd $WORKSPACE
                              ls -la
-                             ./cheribuild/jenkins-cheri-build.py --help
+                             ./cheribuild/jenkins-cheri-build.py nginx --install-prefix "$INSTALL_PREFIX" --with-libstatcounters --nginx/no-debug-info
                              '''
                 }
             }
