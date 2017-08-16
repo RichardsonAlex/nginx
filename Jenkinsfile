@@ -12,11 +12,13 @@ for (x in targets) {
             stage("build ${target}") {
                 checkout scm
                 sdkImage.inside {
+                    env
                     sh '''
                              echo Running in SDK image
                              env
                              pwd
                              ls -la
+                             git clone https://github.com/CTSRD-CHERI/cheribuild.git /cheribuild
                              /cheribuild/jenkins-cheri-build.py --help
                              '''
                 }
