@@ -29,7 +29,7 @@ def buildProjectWithCheribuild(String projectName, String extraArgs, String targ
             }
         }
         sh 'ls -la'
-        archiveArtifacts allowEmptyArchive: true, artifacts: "nginx-${CPU}.tar.xz", fingerprint: true, onlyIfSuccessful: false
+        archiveArtifacts allowEmptyArchive: false, artifacts: "nginx-${CPU}.tar.xz", fingerprint: true, onlyIfSuccessful: false
     }
 }
 
