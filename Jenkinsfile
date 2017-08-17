@@ -34,7 +34,7 @@ def buildProjectWithCheribuild(String projectName, String extraArgs, String targ
 }
 
 void cheribuildProject(String name, String extraArgs, targets=['cheri256', 'cheri128', 'mips', 'hybrid-cheri128']) {
-    targets.collectEntries {
+    return targets.collectEntries {
         [(it): {
             node('docker') {
                 echo "Building for ${it}"
