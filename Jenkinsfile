@@ -21,7 +21,8 @@ for (x in targets) {
                     env.CPU = target
                     env.ISA = 'vanilla'
                     env.INSTALL_PREFIX = "/tmp/benchdir/nginx-${env.CPU}-${env.ISA}"
-                    sh '''
+                    ansiColor('xterm') {
+                        sh '''
                              echo Running in SDK image
                              env
                              pwd
@@ -29,6 +30,7 @@ for (x in targets) {
                              ls -la
                              ./cheribuild/jenkins-cheri-build.py nginx --tarball --install-prefix "/tmp/benchdir/nginx-$CPU" --with-libstatcounters --nginx/no-debug-info
                              '''
+                    }
                 }
                 sh 'ls -la'
                 archiveArtifacts allowEmptyArchive: true, artifacts: "nginx-${CPU}.tar.xz", fingerprint: true, onlyIfSuccessful: false
