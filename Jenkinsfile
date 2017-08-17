@@ -1,47 +1,49 @@
-//def targets = ['cheri256', 'cheri128']
-def targets = ['cheri256']
-def jobs = [:]
-for (x in targets) {
-    def target = x // Need to bind the label variable before the closure - can't do 'for (label in labels)'
-    // Create a map to pass in to the 'parallel' step so we can fire all the builds at once
-    jobs[target] = {
-        node('docker') {
-            pwd()
-            // build steps that should happen on all nodes go here
-            def sdkImage = docker.image("ctsrd/cheri-sdk-${target}:latest")
-            sdkImage.pull() // make sure we have the latest available from Docker Hub
-            stage("build ${target}") {
-                dir('nginx') {
-                    checkout scm
-                }
-                dir ('cheribuild') {
-                    git 'https://github.com/CTSRD-CHERI/cheribuild.git'
-                }
-                sdkImage.inside {
-                    env.CPU = target
-                    env.ISA = 'vanilla'
-                    env.INSTALL_PREFIX = "/tmp/benchdir/nginx-${env.CPU}-${env.ISA}"
-                    ansiColor('xterm') {
-                        sh '''
-                             echo Running in SDK image
-                             env
-                             pwd
-                             cd $WORKSPACE
-                             ls -la
-                             ./cheribuild/jenkins-cheri-build.py nginx --tarball --install-prefix "/tmp/benchdir/nginx-$CPU" --with-libstatcounters --nginx/no-debug-info
-                             '''
-                    }
-                }
-                sh 'ls -la'
-                archiveArtifacts allowEmptyArchive: true, artifacts: "nginx-${CPU}.tar.xz", fingerprint: true, onlyIfSuccessful: false
-            }
-            stage("test ${target}") {
-                sdkImage.inside {
-                    sh 'qemu-system-cheri --help'
-                }
+
+def buildProjectWithCheribuild(String projectName, String extraArgs, String targetCPU) {
+    def sdkCPU = targetCPU
+    if (sdkCPU.startsWith("hybrid-")) {
+        sdkCPU = sdkCPU.substring("hybrid-".length())
+    }
+    // build steps that should happen on all nodes go here
+    def sdkImage = docker.image("ctsrd/cheri-sdk-${sdkCPU}:latest")
+    // sdkImage.pull() // make sure we have the latest available from Docker Hub
+    stage("build ${targetCPU}") {
+        dir(projectName) {
+            checkout scm
+        }
+        dir ('cheribuild') {
+            git 'https://github.com/CTSRD-CHERI/cheribuild.git'
+        }
+        sdkImage.inside {
+            env.CPU = targetCPU
+            env.INSTALL_PREFIX = "/tmp/benchdir/${projectName}-${env.CPU}"
+            ansiColor('xterm') {
+                sh '''
+                         echo Running in SDK image
+                         env
+                         pwd
+                         cd $WORKSPACE
+                         ls -la
+                         '''
+                sh "./cheribuild/jenkins-cheri-build.py ${projectName} --tarball ${extraArgs}"
             }
         }
+        sh 'ls -la'
+        archiveArtifacts allowEmptyArchive: true, artifacts: "nginx-${CPU}.tar.xz", fingerprint: true, onlyIfSuccessful: false
     }
 }
 
-parallel jobs
+void cheribuildProject(String name, String extraArgs, targets=['cheri256', 'cheri128', 'mips', 'hybrid-cheri128']) {
+    targets.collectEntries {
+        [(it): {
+            node('docker') {
+                echo "Building for ${it}"
+                buildProjectWithCheribuild(name, extraArgs, it)
+            }
+        }]
+    }
+}
+
+stage("Build") {
+    parallel cheribuildProject('nginx', '--install-prefix /tmp/benchdir/nginx-$CPU --with-libstatcounters --nginx/no-debug-info')
+}
