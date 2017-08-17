@@ -27,9 +27,11 @@ for (x in targets) {
                              pwd
                              cd $WORKSPACE
                              ls -la
-                             ./cheribuild/jenkins-cheri-build.py nginx --install-prefix "$INSTALL_PREFIX" --with-libstatcounters --nginx/no-debug-info
+                             ./cheribuild/jenkins-cheri-build.py nginx --tarball --install-prefix "/tmp/benchdir/nginx-$CPU" --with-libstatcounters --nginx/no-debug-info
                              '''
                 }
+                sh 'ls -la'
+                archiveArtifacts allowEmptyArchive: true, artifacts: "nginx-${CPU}.tar.xz", fingerprint: true, onlyIfSuccessful: false
             }
             stage("test ${target}") {
                 sdkImage.inside {
