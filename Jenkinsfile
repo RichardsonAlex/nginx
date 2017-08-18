@@ -4,6 +4,7 @@ def buildProjectWithCheribuild(String projectName, String extraArgs, String targ
     if (sdkCPU.startsWith("hybrid-")) {
         sdkCPU = sdkCPU.substring("hybrid-".length())
     }
+    echo "Target CPU: ${targetCPU}, SDK CPU: ${sdkCPU}"
     // build steps that should happen on all nodes go here
     def sdkImage = docker.image("ctsrd/cheri-sdk-${sdkCPU}:latest")
     // sdkImage.pull() // make sure we have the latest available from Docker Hub
@@ -16,7 +17,6 @@ def buildProjectWithCheribuild(String projectName, String extraArgs, String targ
         }
         sdkImage.inside {
             env.CPU = targetCPU
-            env.INSTALL_PREFIX = "/tmp/benchdir/${projectName}-${env.CPU}"
             ansiColor('xterm') {
                 sh '''
                          echo Running in SDK image
@@ -25,7 +25,7 @@ def buildProjectWithCheribuild(String projectName, String extraArgs, String targ
                          cd $WORKSPACE
                          ls -la
                          '''
-                sh "./cheribuild/jenkins-cheri-build.py ${projectName} --tarball ${extraArgs}"
+                sh "./cheribuild/jenkins-cheri-build.py --tarball ${projectName} --cpu ${targetCPU} ${extraArgs}"
             }
         }
         sh 'ls -la'
